@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>REMACA · Tata Letak 16:10</title>
+  <style>
+    /* ===== RESET & VARIABEL ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* Ukuran kartu standar internasional (Poker: 2.5×3.5 inci ≈ rasio 5:7) */
+      --card-width: 105px;
+      --card-height: 147px;
+      --card-mini-width: 60px;
+      --card-mini-height: 84px;
+
+      --bg-main: #ffffff;
+      --bg-dark: #0a0a0a;
+      --bg-gray: #e8e8e8;
+      --bg-drop: #fafafa;
+      --border-thick: 4px solid #0a0a0a;
+      --border-thin: 2px solid #0a0a0a;
+      --text-main: #0a0a0a;
+      --text-inv: #ffffff;
+      --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Menlo', monospace;
+    }
+
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      background: var(--bg-dark);
+      color: var(--text-main);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===== GRID UTAMA (optimal untuk 16:10) ===== */
+    #app {
+      display: grid;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      grid-template-columns: minmax(300px, 1.3fr) 4fr minmax(220px, 1fr);
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 4px;
+      background: var(--bg-dark);
+    }
+
+    #panel-aturan   { grid-column: 1; grid-row: 1; }
+    #panel-kodomain { grid-column: 1; grid-row: 2; }
+    #panel-workspace{ grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; justify-content: center; }
+    #panel-domain   { grid-column: 1 / span 2; grid-row: 3; }
+    #panel-arsip    { grid-column: 3; grid-row: 1 / span 3; display: flex; flex-direction: column; }
+
+    .panel {
+      background: var(--bg-main);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel-header {
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: var(--border-thick);
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: clamp(10px, 1.2vw, 13px);
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    /* ===== KARTU DASAR (RASIO 5:7 TETAP) ===== */
+    .card-base {
+      aspect-ratio: 5 / 7;
+      border: var(--border-thin);
+      background: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: border-width 0.12s, transform 0.12s;
+    }
+    .card-base img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* Kartu tertutup (dek) */
+    .deck-card {
+      width: var(--card-width);
+      height: var(--card-height);
+      border: var(--border-thick);
+      background: var(--bg-main);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-width 0.12s, transform 0.12s, opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .deck-card img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .deck-card .label-overlay {
+      position: absolute;
+      bottom: 5px; left: 5px; right: 5px;
+      text-align: center;
+      background: rgba(0,0,0,0.78);
+      color: #fff;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 4px;
+      letter-spacing: 0.3px;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .deck-card.disabled {
+      opacity: 0.35; cursor: not-allowed; filter: grayscale(0.6);
+    }
+    .deck-card:hover:not(.disabled) {
+      border-width: 5px; transform: translateY(-1px);
+    }
+
+    /* Kartu aktif (terbuka) */
+    .active-card {
+      width: var(--card-width);
+      height: var(--card-height);
+      border: var(--border-thin);
+      background: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .active-card img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Kartu di tangan (domain) */
+    .playing-card {
+      width: var(--card-width);
+      height: var(--card-height);
+      border: var(--border-thin);
+      background: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      cursor: grab;
+      transition: border-width 0.1s, transform 0.1s;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .playing-card:active { cursor: grabbing; }
+    .playing-card:hover { border-width: 4px; transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0,0,0,0.15); }
+    .playing-card.selected { background: var(--bg-dark); border: var(--border-thick); transform: translateY(-5px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
+    .playing-card.selected img { filter: brightness(1.15); }
+    .playing-card img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+
+    /* Kartu mini di drop‑zone / arsip */
+    .mini-card {
+      width: var(--card-mini-width);
+      height: var(--card-mini-height);
+      border: var(--border-thin);
+      background: var(--bg-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .mini-card img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+    /* ===== WRAPPER DEK (HORIZONTAL) ===== */
+    .deck-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex: 1;
+      padding: 4px 0;
+    }
+
+    /* ===== WORKSPACE (ASPECT 16:10) ===== */
+    .workspace-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-gray);
+      padding: 10px;
+    }
+    .workspace-inner {
+      aspect-ratio: 16 / 10;
+      width: 100%;
+      max-height: 100%;
+      background: var(--bg-main);
+      border: var(--border-thick);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .drop-zone {
+      flex: 1;
+      border: 3px dashed #0a0a0a;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      align-content: flex-start;
+      overflow-y: auto;
+      background: var(--bg-drop);
+      min-height: 60px;
+      transition: background 0.15s, border 0.15s;
+    }
+    .drop-zone.drag-over { background: var(--bg-gray); border: var(--border-thick); }
+    .placeholder { color: #888; font-style: italic; width: 100%; text-align: center; margin-top: 22px; font-size: clamp(11px, 1.5vw, 13px); }
+
+    /* ===== DOMAIN CONTAINER ===== */
+    #domain-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+      align-content: flex-start;
+      padding: 4px 2px;
+    }
+
+    /* ===== ARSIP ===== */
+    #archive-list {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .archive-item {
+      border: var(--border-thin); padding: 8px 10px; font-size: 11px; background: #fcfcfc;
+    }
+    .archive-item .header {
+      display: flex; justify-content: space-between; font-weight: 700;
+      border-bottom: 2px solid #0a0a0a; padding-bottom: 4px; margin-bottom: 5px; font-size: 12px;
+    }
+    .archive-item .match-thumbs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+
+    /* ===== TOMBOL & BADGE ===== */
+    .btn {
+      padding: 11px 16px; border: var(--border-thick); background: var(--bg-main);
+      color: var(--text-main); font-weight: 700; text-transform: uppercase;
+      cursor: pointer; font-family: var(--font-mono); font-size: clamp(11px, 1.3vw, 13px);
+      letter-spacing: 0.3px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: var(--bg-dark); color: var(--text-inv); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-sm {
+      padding: 4px 10px; border: var(--border-thin); background: var(--bg-main);
+      cursor: pointer; font-weight: 700; font-family: var(--font-mono); font-size: 11px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-sm:hover { background: var(--bg-dark); color: var(--text-inv); }
+    .status-badge {
+      font-size: 10px; padding: 4px 10px; border: var(--border-thin); font-weight: 700; letter-spacing: 0.3px;
+    }
+    .status-badge.active { background: var(--bg-dark); color: var(--text-inv); }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: #fff; display: none; align-items: center; justify-content: center; z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      border: var(--border-thick); background: #fff; padding: 28px 24px;
+      max-width: 480px; width: 92%; text-align: center;
+    }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+    .home-card {
+      border: var(--border-thick); padding: 22px 12px; cursor: pointer;
+      font-weight: 700; font-size: clamp(18px, 2.5vw, 22px); text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+    }
+    .home-card:hover { background: var(--bg-dark); color: var(--text-inv); }
+    .hidden { display: none !important; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #e0e0e0; }
+    ::-webkit-scrollbar-thumb { background: #0a0a0a; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- HOME PAGE -->
+<div id="home-page" class="modal-overlay active">
+  <div class="modal-box">
+    <h1 style="font-size:clamp(36px,5vw,48px);border-bottom:var(--border-thick);padding-bottom:10px;margin-bottom:10px;letter-spacing:-0.5px;">REMACA</h1>
+    <p style="margin-bottom:6px;font-size:clamp(12px,1.5vw,14px);">Relasi · Masuk · Cocokkan</p>
+    <div class="home-grid">
+      <div onclick="startGame('kartun')" class="home-card">📺<br>Kartun</div>
+      <div onclick="startGame('bilangan')" class="home-card">🔢<br>Bilangan</div>
+    </div>
+  </div>
+</div>
+
+<!-- APLIKASI UTAMA -->
+<div id="app">
+
+  <!-- PANEL KIRI ATAS: DEK ATURAN -->
+  <div class="panel" id="panel-aturan">
+    <div class="panel-header">Dek Aturan</div>
+    <div class="deck-wrapper">
+      <div id="relation-deck-pile" onclick="drawRelationCard()" class="deck-card">
+        <img src="images/card-back.svg" alt="Kartu Tertutup" draggable="false">
+        <div class="label-overlay" id="relation-deck-count">Sisa: 0</div>
+      </div>
+      <div id="active-relation-display" class="active-card" style="border:2px dashed #aaa;">
+        <div style="font-weight:700;font-size:11px;color:#999;">BELUM DIBUKA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL KIRI BAWAH: DEK KODOMAIN -->
+  <div class="panel" id="panel-kodomain">
+    <div class="panel-header">Kodomain</div>
+    <div class="deck-wrapper">
+      <div id="kodomain-deck-pile" onclick="drawKodomainCard()" class="deck-card">
+        <img src="images/card-back.svg" alt="Kartu Tertutup" draggable="false">
+        <div class="label-overlay" id="kodomain-deck-count">Sisa: 0</div>
+      </div>
+      <div id="active-kodomain-card" class="active-card" style="border:2px dashed #aaa;">
+        <div style="font-weight:700;font-size:11px;color:#999;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE TENGAH -->
+  <div class="panel" id="panel-workspace">
+    <div class="workspace-wrapper">
+      <div class="workspace-inner">
+        <div class="panel-header" style="border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;">
+          <span>TARIK DOMAIN KESINI</span>
+          <span id="active-status" class="status-badge">MENUNGGU</span>
+        </div>
+        <div id="active-stack" class="drop-zone">
+          <span class="placeholder">Buka Relasi &amp; Kodomain dahulu...</span>
+        </div>
+        <button id="next-round-btn" onclick="archiveCurrentRound()" disabled class="btn" style="margin-top:12px;width:100%;">Konfirmasi & Lanjut</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DOMAIN (TANGAN) -->
+  <div class="panel" id="panel-domain">
+    <div class="panel-header">
+      <span>Domain (Di Tangan)</span>
+      <span style="font-size:12px;">Sisa: <span id="cards-left">0</span></span>
+    </div>
+    <div id="domain-container"></div>
+  </div>
+
+  <!-- PANEL ARSIP -->
+  <div class="panel" id="panel-arsip">
+    <div class="panel-header">
+      <span>Arsip Ronde</span>
+      <button onclick="confirmGoHome()" class="btn-sm">🏠 KELUAR</button>
+    </div>
+    <div id="archive-list">
+      <div style="text-align:center;color:#999;margin-top:18px;font-style:italic;font-size:12px;">Belum ada data...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL PESAN -->
+<div id="msg-modal" class="modal-overlay">
+  <div class="modal-box">
+    <h2 id="modal-title" style="margin-bottom:10px;text-transform:uppercase;border-bottom:var(--border-thin);padding-bottom:8px;">Pesan</h2>
+    <p id="modal-body" style="margin-bottom:20px;font-size:14px;"></p>
+    <button class="btn" onclick="closeModal()" style="width:100%;">OK</button>
+  </div>
+</div>
+
+<!-- MODAL KONFIRMASI KELUAR -->
+<div id="confirm-modal" class="modal-overlay">
+  <div class="modal-box">
+    <h2 style="margin-bottom:10px;text-transform:uppercase;border-bottom:var(--border-thin);padding-bottom:8px;">Kembali ke Awal?</h2>
+    <p style="margin-bottom:20px;">Progres tidak akan disimpan.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn" onclick="closeConfirmModal()" style="flex:1;">BATAL</button>
+      <button class="btn" onclick="forceGoHome()" style="flex:1;background:var(--bg-dark);color:var(--text-inv);">YA</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ==================== DATA (FILE SVG EKSTERNAL) ====================
+    const shows = [
+      { id: 'spongebob', title: 'SpongeBob', image: 'images/kodomain/show-spongebob.svg' },
+      { id: 'doraemon', title: 'Doraemon', image: 'images/kodomain/show-doraemon.svg' },
+      { id: 'naruto', title: 'Naruto', image: 'images/kodomain/show-naruto.svg' },
+      { id: 'upinipin', title: 'Upin & Ipin', image: 'images/kodomain/show-upinipin.svg' },
+      { id: 'avatar', title: 'Avatar Aang', image: 'images/kodomain/show-avatar.svg' },
+      { id: 'onepiece', title: 'One Piece', image: 'images/kodomain/show-onepiece.svg' }
+    ];
+
+    const allCharacters = [
+      { id: 'c1', name: 'SpongeBob', showId: 'spongebob', image: 'images/domain/sponge.svg' },
+      { id: 'c2', name: 'Patrick', showId: 'spongebob', image: 'images/domain/patrick.svg' },
+      { id: 'c3', name: 'Squidward', showId: 'spongebob', image: 'images/domain/squidward.svg' },
+      { id: 'c4', name: 'Mr. Krabs', showId: 'spongebob', image: 'images/domain/mrkrabs.svg' },
+      { id: 'c5', name: 'Doraemon', showId: 'doraemon', image: 'images/domain/doraemon.svg' },
+      { id: 'c6', name: 'Nobita', showId: 'doraemon', image: 'images/domain/nobita.svg' },
+      { id: 'c7', name: 'Shizuka', showId: 'doraemon', image: 'images/domain/shizuka.svg' },
+      { id: 'c8', name: 'Giant', showId: 'doraemon', image: 'images/domain/giant.svg' },
+      { id: 'c9', name: 'Naruto', showId: 'naruto', image: 'images/domain/naruto.svg' },
+      { id: 'c10', name: 'Sasuke', showId: 'naruto', image: 'images/domain/sasuke.svg' },
+      { id: 'c11', name: 'Sakura', showId: 'naruto', image: 'images/domain/sakura.svg' },
+      { id: 'c12', name: 'Kakashi', showId: 'naruto', image: 'images/domain/kakashi.svg' },
+      { id: 'c13', name: 'Upin', showId: 'upinipin', image: 'images/domain/upin.svg' },
+      { id: 'c14', name: 'Ipin', showId: 'upinipin', image: 'images/domain/ipin.svg' }
+    ];
+
+    const domainNumbers = [
+      { id: 'n2', name: '2', val: 2, image: 'images/domain/n2.svg' },
+      { id: 'n3', name: '3', val: 3, image: 'images/domain/n3.svg' },
+      { id: 'n4', name: '4', val: 4, image: 'images/domain/n4.svg' },
+      { id: 'n5', name: '5', val: 5, image: 'images/domain/n5.svg' },
+      { id: 'n6', name: '6', val: 6, image: 'images/domain/n6.svg' },
+      { id: 'n8', name: '8', val: 8, image: 'images/domain/n8.svg' },
+      { id: 'n9', name: '9', val: 9, image: 'images/domain/n9.svg' },
+      { id: 'n10', name: '10', val: 10, image: 'images/domain/n10.svg' },
+      { id: 'n12', name: '12', val: 12, image: 'images/domain/n12.svg' },
+      { id: 'n15', name: '15', val: 15, image: 'images/domain/n15.svg' }
+    ];
+
+    const kodomainNumbers = [
+      { id: 'k3', title: '3', val: 3, rule: 'habis_dibagi', image: 'images/kodomain/k3.svg' },
+      { id: 'k5', title: '5', val: 5, rule: 'habis_dibagi', image: 'images/kodomain/k5.svg' },
+      { id: 'k4', title: '4', val: 4, rule: 'habis_dibagi', image: 'images/kodomain/k4.svg' },
+      { id: 'k8', title: '8', val: 8, rule: 'hasil_kali_2', image: 'images/kodomain/k8.svg' },
+      { id: 'k12', title: '12', val: 12, rule: 'hasil_kali_2', image: 'images/kodomain/k12.svg' },
+      { id: 'k20', title: '20', val: 20, rule: 'hasil_kali_2', image: 'images/kodomain/k20.svg' }
+    ];
+
+    const relationCardsKartun = [
+      { id: 'r1', label: 'Karakter Dari', rule: 'show_match', image: 'images/relation/kartun-relation.svg' }
+    ];
+    const relationCardsBilangan = [
+      { id: 'r2', label: 'Habis Dibagi Oleh', rule: 'habis_dibagi', image: 'images/relation/habis-dibagi.svg' },
+      { id: 'r3', label: 'Hasil Kali 2 =', rule: 'hasil_kali_2', image: 'images/relation/hasil-kali-2.svg' }
+    ];
+
+    // ==================== STATE ====================
+    let currentMode = 'kartun';
+    let domainHand = [], kodomainDeck = [], relationDeck = [];
+    let currentRelation = null, activeKodomain = null, activeRelationsMatched = [], archivedRounds = [];
+    let selectedCardElement = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function shuffle(arr) { const a = [...arr]; for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function showModal(t,m) { $('modal-title').textContent=t; $('modal-body').textContent=m; $('msg-modal').classList.add('active'); }
+    function closeModal() { $('msg-modal').classList.remove('active'); }
+    function confirmGoHome() { $('confirm-modal').classList.add('active'); }
+    function closeConfirmModal() { $('confirm-modal').classList.remove('active'); }
+    function forceGoHome() { closeConfirmModal(); $('home-page').classList.add('active'); }
+
+    function startGame(mode) {
+      currentMode = mode; $('home-page').classList.remove('active'); resetGameState();
+    }
+
+    function resetGameState() {
+      selectedCardElement=null; currentRelation=null; activeKodomain=null; activeRelationsMatched=[]; archivedRounds=[];
+      if (currentMode==='kartun') { domainHand=shuffle([...allCharacters]); kodomainDeck=shuffle([...shows]); relationDeck=shuffle([...relationCardsKartun]); }
+      else { domainHand=shuffle([...domainNumbers]); kodomainDeck=shuffle([...kodomainNumbers]); relationDeck=shuffle([...relationCardsBilangan]); }
+      updateAllDecksUI(); resetWorkspaceUI(); renderDomainHand();
+      $('archive-list').innerHTML='<div style="text-align:center;color:#999;margin-top:18px;font-style:italic;font-size:12px;">Belum ada arsip ronde...</div>';
+      $('cards-left').textContent=domainHand.length;
+    }
+
+    function updateAllDecksUI() {
+      const relDeck = $('relation-deck-pile');
+      if (relationDeck.length===0) { relDeck.classList.add('disabled'); relDeck.querySelector('.label-overlay').textContent='HABIS'; }
+      else { relDeck.classList.remove('disabled'); relDeck.querySelector('.label-overlay').textContent='Sisa: '+relationDeck.length; }
+      const kodDeck = $('kodomain-deck-pile');
+      if (kodomainDeck.length===0) { kodDeck.classList.add('disabled'); kodDeck.querySelector('.label-overlay').textContent='HABIS'; }
+      else { kodDeck.classList.remove('disabled'); kodDeck.querySelector('.label-overlay').textContent='Sisa: '+kodomainDeck.length; }
+      const relDisplay = $('active-relation-display');
+      if (currentRelation) { relDisplay.innerHTML=`<img src="${currentRelation.image}" alt="${currentRelation.label}" style="width:100%;height:100%;object-fit:contain;">`; relDisplay.style.border='var(--border-thin)'; }
+      else { relDisplay.innerHTML='<div style="font-weight:700;font-size:11px;color:#999;">BELUM DIBUKA</div>'; relDisplay.style.border='2px dashed #aaa'; }
+    }
+
+    function resetWorkspaceUI() {
+      $('active-kodomain-card').innerHTML='<div style="font-weight:700;font-size:11px;color:#999;">-</div>'; $('active-kodomain-card').style.border='2px dashed #aaa';
+      $('active-stack').innerHTML='<span class="placeholder">Buka Relasi &amp; Kodomain dahulu...</span>';
+      $('active-status').textContent='MENUNGGU'; $('active-status').className='status-badge'; $('next-round-btn').disabled=true;
+    }
+
+    function renderDomainHand() {
+      const c=$('domain-container'); c.innerHTML='';
+      domainHand.forEach(item=>{ const card=document.createElement('div'); card.className='playing-card'; card.draggable=true; card.dataset.id=item.id;
+        card.innerHTML=`<img src="${item.image}" alt="${item.name}" draggable="false">`;
+        card.addEventListener('click',e=>{ e.stopPropagation(); selectDomainCard(card); });
+        card.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',item.id); card.style.opacity='0.55'; });
+        card.addEventListener('dragend',()=>{ card.style.opacity='1'; });
+        c.appendChild(card);
+      });
+    }
+
+    function selectDomainCard(el) {
+      if (selectedCardElement && selectedCardElement!==el) selectedCardElement.classList.remove('selected');
+      if (selectedCardElement===el) { el.classList.remove('selected'); selectedCardElement=null; }
+      else { el.classList.add('selected'); selectedCardElement=el; }
+    }
+
+    function drawRelationCard() {
+      if (currentRelation && (kodomainDeck.length>0 || activeKodomain!==null)) { showModal('RELASI AKTIF','Selesaikan ronde sebelum buka aturan baru.'); return; }
+      if (relationDeck.length===0) return;
+      currentRelation=relationDeck.shift();
+      if (currentMode==='kartun') kodomainDeck=shuffle([...shows]); else kodomainDeck=shuffle([...kodomainNumbers]);
+      updateAllDecksUI();
+    }
+
+    function drawKodomainCard() {
+      if (!currentRelation) { showModal('GAGAL','Buka Dek Aturan (Relasi) dulu!'); return; }
+      if (activeKodomain) { showModal('RONDE AKTIF','Lakukan konfirmasi & lanjut terlebih dahulu.'); return; }
+      if (kodomainDeck.length===0) return;
+      activeKodomain=kodomainDeck.shift(); activeRelationsMatched=[];
+      updateAllDecksUI();
+      const kodCard=$('active-kodomain-card'); kodCard.innerHTML=`<img src="${activeKodomain.image}" alt="${activeKodomain.title||activeKodomain.name}" style="width:100%;height:100%;object-fit:contain;">`;
+      kodCard.style.border='var(--border-thin)'; $('active-stack').innerHTML='<span class="placeholder" style="color:#000;">Area aktif. Tarik/klik domain ke sini.</span>';
+      $('active-status').textContent='AKTIF'; $('active-status').className='status-badge active'; $('next-round-btn').disabled=false;
+    }
+
+    function attemptMatch(cardId) {
+      if (!activeKodomain||!currentRelation) return;
+      const idx=domainHand.findIndex(d=>d.id===cardId); if (idx===-1) return;
+      const item=domainHand[idx]; let cocok=false, feedback='';
+      if (currentMode==='kartun') { cocok=(item.showId===activeKodomain.id); feedback=`Salah! ${item.name} bukan dari ${activeKodomain.title}.`; }
+      else { const x=item.val, y=activeKodomain.val;
+        if (currentRelation.rule==='habis_dibagi') { cocok=(x%y===0); feedback=`Salah! ${x} tidak habis dibagi ${y}.`; }
+        else if (currentRelation.rule==='hasil_kali_2') { cocok=(x*2===y); feedback=`Salah! ${x} × 2 bukan ${y}.`; }
+      }
+      if (cocok) { domainHand.splice(idx,1); activeRelationsMatched.push(item); renderActiveStack(); renderDomainHand(); $('cards-left').textContent=domainHand.length; if(selectedCardElement){selectedCardElement.classList.remove('selected');selectedCardElement=null;} }
+      else { if(selectedCardElement){selectedCardElement.classList.remove('selected');selectedCardElement=null;} showModal('TIDAK COCOK',feedback); }
+    }
+
+    function renderActiveStack() {
+      const stack=$('active-stack'); stack.innerHTML='';
+      if (activeRelationsMatched.length===0) { stack.innerHTML='<span class="placeholder">Kosong. Tarik ke sini.</span>'; return; }
+      activeRelationsMatched.forEach(item=>{ const mini=document.createElement('div'); mini.className='mini-card'; mini.innerHTML=`<img src="${item.image}" alt="${item.name}">`; stack.appendChild(mini); });
+    }
+
+    function archiveCurrentRound() {
+      if (!activeKodomain) return;
+      archivedRounds.push({ relation:currentRelation, kodomain:activeKodomain, matches:[...activeRelationsMatched] });
+      const list=$('archive-list'); if (archivedRounds.length===1) list.innerHTML='';
+      const div=document.createElement('div'); div.className='archive-item';
+      const matchNames=activeRelationsMatched.length>0?activeRelationsMatched.map(m=>m.name).join(', '):'KOSONG';
+      let thumbs=''; activeRelationsMatched.forEach(m=>{ thumbs+=`<div class="mini-card" style="width:36px;height:50px;"><img src="${m.image}" alt="${m.name}"></div>`; });
+      div.innerHTML=`<div class="header"><span>#${archivedRounds.length}</span> <span>${activeKodomain.title||activeKodomain.name}</span></div>
+        <div style="font-size:10px;margin-bottom:4px;">Aturan: ${currentRelation.label}</div>
+        <div style="font-weight:700;font-size:11px;">Isi: ${matchNames}</div><div class="match-thumbs">${thumbs||'<span style="font-size:10px;color:#999;">—</span>'}</div>`;
+      list.appendChild(div); list.scrollTop=list.scrollHeight;
+      activeKodomain=null; activeRelationsMatched=[]; resetWorkspaceUI();
+      if (kodomainDeck.length===0 && relationDeck.length===0) showModal('SELESAI','Permainan Selesai! Semua dek telah dihabiskan.');
+    }
+
+    const activeStack=$('active-stack');
+    activeStack.addEventListener('dragover',e=>{ e.preventDefault(); if(activeKodomain) activeStack.classList.add('drag-over'); });
+    activeStack.addEventListener('dragleave',()=>activeStack.classList.remove('drag-over'));
+    activeStack.addEventListener('drop',e=>{ e.preventDefault(); activeStack.classList.remove('drag-over'); if(!activeKodomain) return; const id=e.dataTransfer.getData('text/plain'); if(id) attemptMatch(id); });
+    activeStack.addEventListener('click',()=>{ if(selectedCardElement && activeKodomain) attemptMatch(selectedCardElement.dataset.id); });
+
+    window.startGame=startGame; window.drawRelationCard=drawRelationCard; window.drawKodomainCard=drawKodomainCard;
+    window.archiveCurrentRound=archiveCurrentRound; window.confirmGoHome=confirmGoHome; window.closeConfirmModal=closeConfirmModal;
+    window.forceGoHome=forceGoHome; window.closeModal=closeModal;
+  })();
+</script>
+</body>
+</html>
