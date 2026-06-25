@@ -5,171 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, viewport-fit=cover">
   <title>REMACA · Tata Letak 16:10</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    :root {
-      --card-width: 105px;
-      --card-height: 147px;
-      --card-mini-width: 60px;
-      --card-mini-height: 84px;
-      --bg-main: #ffffff;
-      --bg-dark: #0a0a0a;
-      --bg-gray: #e8e8e8;
-      --bg-drop: #fafafa;
-      --border-thick: 4px solid #0a0a0a;
-      --border-thin: 2px solid #0a0a0a;
-      --text-main: #0a0a0a;
-      --text-inv: #ffffff;
-      --font-mono: 'SF Mono','Cascadia Code','Consolas','Monaco','Menlo',monospace;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --card-width:105px;--card-height:147px;--card-mini-width:60px;--card-mini-height:84px;
+      --bg-main:#fff;--bg-dark:#0a0a0a;--bg-gray:#e8e8e8;--bg-drop:#fafafa;
+      --border-thick:4px solid #0a0a0a;--border-thin:2px solid #0a0a0a;
+      --text-main:#0a0a0a;--text-inv:#fff;
+      --font-mono:'SF Mono','Cascadia Code','Consolas','Monaco','Menlo',monospace
     }
-    body,html {
-      width:100vw; height:100vh; height:100dvh; overflow:hidden;
-      font-family:var(--font-mono); background:var(--bg-dark); color:var(--text-main);
-      user-select:none; -webkit-tap-highlight-color:transparent;
-    }
-    #app {
-      display:grid; width:100vw; height:100vh; height:100dvh;
-      grid-template-columns: minmax(300px,1.3fr) 4fr minmax(220px,1fr);
-      grid-template-rows: 1fr 1fr 1fr;
-      gap:4px; background:var(--bg-dark);
-    }
-    #panel-aturan   { grid-column:1; grid-row:1; }
-    #panel-kodomain { grid-column:1; grid-row:2; }
-    #panel-workspace{ grid-column:2; grid-row:1/span 2; display:flex; align-items:center; justify-content:center; }
-    #panel-domain   { grid-column:1/span 2; grid-row:3; }
-    #panel-arsip    { grid-column:3; grid-row:1/span 3; display:flex; flex-direction:column; }
-
-    .panel {
-      background:var(--bg-main); padding:10px; display:flex; flex-direction:column;
-      overflow:hidden; position:relative;
-    }
-    .panel-header {
-      font-weight:700; text-transform:uppercase; border-bottom:var(--border-thick);
-      padding-bottom:6px; margin-bottom:10px; display:flex;
-      justify-content:space-between; align-items:center;
-      font-size:clamp(10px,1.2vw,13px); letter-spacing:0.3px; flex-shrink:0;
-    }
-
-    .card-base {
-      aspect-ratio:5/7; border:var(--border-thin); background:var(--bg-main);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      overflow:hidden; transition:border-width .12s,transform .12s;
-    }
-    .card-base img { width:100%; height:100%; object-fit:contain; display:block; pointer-events:none; }
-
-    .deck-card {
-      width:var(--card-width); height:var(--card-height); border:var(--border-thick);
-      background:var(--bg-main); cursor:pointer; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; position:relative; overflow:hidden;
-      transition:border-width .12s,transform .12s,opacity .2s; flex-shrink:0;
-    }
-    .deck-card img { width:100%; height:100%; object-fit:cover; display:block; }
-    .deck-card .label-overlay {
-      position:absolute; bottom:5px; left:5px; right:5px; text-align:center;
-      background:rgba(0,0,0,.78); color:#fff; font-size:10px; font-weight:700;
-      padding:3px 4px; letter-spacing:.3px; border-radius:2px; pointer-events:none;
-    }
-    .deck-card.disabled { opacity:.35; cursor:not-allowed; filter:grayscale(.6); }
-    .deck-card:hover:not(.disabled) { border-width:5px; transform:translateY(-1px); }
-
-    .active-card {
-      width:var(--card-width); height:var(--card-height); border:var(--border-thin);
-      background:var(--bg-main); display:flex; flex-direction:column; align-items:center;
-      justify-content:center; text-align:center; padding:6px; flex-shrink:0; overflow:hidden;
-    }
-    .active-card img { width:100%; height:100%; object-fit:contain; display:block; }
-
-    .playing-card {
-      width:var(--card-width); height:var(--card-height); border:var(--border-thin);
-      background:var(--bg-main); display:flex; flex-direction:column; align-items:center;
-      justify-content:center; padding:5px; cursor:grab; transition:border-width .1s,transform .1s;
-      flex-shrink:0; overflow:hidden;
-    }
-    .playing-card:active { cursor:grabbing; }
-    .playing-card:hover { border-width:4px; transform:translateY(-3px); box-shadow:0 6px 14px rgba(0,0,0,.15); }
-    .playing-card.selected {
-      background:var(--bg-dark); border:var(--border-thick); transform:translateY(-5px);
-      box-shadow:0 8px 18px rgba(0,0,0,.25);
-    }
-    .playing-card.selected img { filter:brightness(1.15); }
-    .playing-card img { width:100%; height:100%; object-fit:contain; display:block; pointer-events:none; }
-
-    .mini-card {
-      width:var(--card-mini-width); height:var(--card-mini-height); border:var(--border-thin);
-      background:var(--bg-main); display:flex; align-items:center; justify-content:center;
-      overflow:hidden; flex-shrink:0;
-    }
-    .mini-card img { width:100%; height:100%; object-fit:contain; display:block; }
-
-    .deck-wrapper {
-      display:flex; flex-direction:row; align-items:center; justify-content:center;
-      gap:12px; flex:1; padding:4px 0;
-    }
-
-    .workspace-wrapper {
-      width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-      background:var(--bg-gray); padding:10px;
-    }
-    .workspace-inner {
-      aspect-ratio:16/10; width:100%; max-height:100%; background:var(--bg-main);
-      border:var(--border-thick); padding:14px 16px; display:flex; flex-direction:column; overflow:hidden;
-    }
-
-    .drop-zone {
-      flex:1; border:3px dashed #0a0a0a; display:flex; flex-wrap:wrap; gap:10px; padding:10px;
-      align-content:flex-start; overflow-y:auto; background:var(--bg-drop);
-      min-height:60px; transition:background .15s,border .15s;
-    }
-    .drop-zone.drag-over { background:var(--bg-gray); border:var(--border-thick); }
-    .placeholder { color:#888; font-style:italic; width:100%; text-align:center; margin-top:22px; font-size:clamp(11px,1.5vw,13px); }
-
-    #domain-container {
-      display:flex; flex-wrap:wrap; gap:10px; overflow-y:auto; flex:1;
-      align-content:flex-start; padding:4px 2px;
-    }
-
-    #archive-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
-    .archive-item { border:var(--border-thin); padding:8px 10px; font-size:11px; background:#fcfcfc; }
-    .archive-item .header {
-      display:flex; justify-content:space-between; font-weight:700;
-      border-bottom:2px solid #0a0a0a; padding-bottom:4px; margin-bottom:5px; font-size:12px;
-    }
-    .archive-item .match-thumbs { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
-
-    .btn {
-      padding:11px 16px; border:var(--border-thick); background:var(--bg-main); color:var(--text-main);
-      font-weight:700; text-transform:uppercase; cursor:pointer; font-family:var(--font-mono);
-      font-size:clamp(11px,1.3vw,13px); letter-spacing:.3px; transition:background .15s,color .15s;
-    }
-    .btn:hover:not(:disabled) { background:var(--bg-dark); color:var(--text-inv); }
-    .btn:disabled { opacity:.3; cursor:not-allowed; }
-    .btn-sm {
-      padding:4px 10px; border:var(--border-thin); background:var(--bg-main);
-      cursor:pointer; font-weight:700; font-family:var(--font-mono); font-size:11px;
-      transition:background .15s,color .15s;
-    }
-    .btn-sm:hover { background:var(--bg-dark); color:var(--text-inv); }
-    .status-badge { font-size:10px; padding:4px 10px; border:var(--border-thin); font-weight:700; letter-spacing:.3px; }
-    .status-badge.active { background:var(--bg-dark); color:var(--text-inv); }
-
-    .modal-overlay {
-      position:fixed; top:0; left:0; right:0; bottom:0; background:#fff;
-      display:none; align-items:center; justify-content:center; z-index:100;
-    }
-    .modal-overlay.active { display:flex; }
-    .modal-box {
-      border:var(--border-thick); background:#fff; padding:28px 24px;
-      max-width:480px; width:92%; text-align:center;
-    }
-    .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px; }
-    .home-card {
-      border:var(--border-thick); padding:22px 12px; cursor:pointer; font-weight:700;
-      font-size:clamp(18px,2.5vw,22px); text-transform:uppercase; transition:background .15s,color .15s;
-    }
-    .home-card:hover { background:var(--bg-dark); color:var(--text-inv); }
-    .hidden { display:none!important; }
-    ::-webkit-scrollbar { width:6px; height:6px; }
-    ::-webkit-scrollbar-track { background:#e0e0e0; }
-    ::-webkit-scrollbar-thumb { background:#0a0a0a; border-radius:3px; }
+    body,html{width:100vw;height:100vh;height:100dvh;overflow:hidden;font-family:var(--font-mono);background:var(--bg-dark);color:var(--text-main);user-select:none;-webkit-tap-highlight-color:transparent}
+    #app{display:grid;width:100vw;height:100vh;height:100dvh;grid-template-columns:minmax(300px,1.3fr) 4fr minmax(220px,1fr);grid-template-rows:1fr 1fr 1fr;gap:4px;background:var(--bg-dark)}
+    #panel-aturan{grid-column:1;grid-row:1}
+    #panel-kodomain{grid-column:1;grid-row:2}
+    #panel-workspace{grid-column:2;grid-row:1/span 2;display:flex;align-items:center;justify-content:center}
+    #panel-domain{grid-column:1/span 2;grid-row:3}
+    #panel-arsip{grid-column:3;grid-row:1/span 3;display:flex;flex-direction:column}
+    .panel{background:var(--bg-main);padding:10px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .panel-header{font-weight:700;text-transform:uppercase;border-bottom:var(--border-thick);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-size:clamp(10px,1.2vw,13px);letter-spacing:.3px;flex-shrink:0}
+    .deck-card{width:var(--card-width);height:var(--card-height);border:var(--border-thick);background:var(--bg-main);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:border-width .12s,transform .12s,opacity .2s;flex-shrink:0}
+    .deck-card img{width:100%;height:100%;object-fit:cover;display:block}
+    .deck-card .label-overlay{position:absolute;bottom:5px;left:5px;right:5px;text-align:center;background:rgba(0,0,0,.78);color:#fff;font-size:10px;font-weight:700;padding:3px 4px;letter-spacing:.3px;border-radius:2px;pointer-events:none}
+    .deck-card.disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.6)}
+    .deck-card:hover:not(.disabled){border-width:5px;transform:translateY(-1px)}
+    .active-card{width:var(--card-width);height:var(--card-height);border:var(--border-thin);background:var(--bg-main);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px;flex-shrink:0;overflow:hidden}
+    .active-card img{width:100%;height:100%;object-fit:contain;display:block}
+    .playing-card{width:var(--card-width);height:var(--card-height);border:var(--border-thin);background:var(--bg-main);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px;cursor:grab;transition:border-width .1s,transform .1s;flex-shrink:0;overflow:hidden}
+    .playing-card:active{cursor:grabbing}
+    .playing-card:hover{border-width:4px;transform:translateY(-3px);box-shadow:0 6px 14px rgba(0,0,0,.15)}
+    .playing-card.selected{background:var(--bg-dark);border:var(--border-thick);transform:translateY(-5px);box-shadow:0 8px 18px rgba(0,0,0,.25)}
+    .playing-card.selected img{filter:brightness(1.15)}
+    .playing-card img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+    .mini-card{width:var(--card-mini-width);height:var(--card-mini-height);border:var(--border-thin);background:var(--bg-main);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+    .mini-card img{width:100%;height:100%;object-fit:contain;display:block}
+    .deck-wrapper{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;flex:1;padding:4px 0}
+    .workspace-wrapper{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-gray);padding:10px}
+    .workspace-inner{aspect-ratio:16/10;width:100%;max-height:100%;background:var(--bg-main);border:var(--border-thick);padding:14px 16px;display:flex;flex-direction:column;overflow:hidden}
+    .drop-zone{flex:1;border:3px dashed #0a0a0a;display:flex;flex-wrap:wrap;gap:10px;padding:10px;align-content:flex-start;overflow-y:auto;background:var(--bg-drop);min-height:60px;transition:background .15s,border .15s}
+    .drop-zone.drag-over{background:var(--bg-gray);border:var(--border-thick)}
+    .placeholder{color:#888;font-style:italic;width:100%;text-align:center;margin-top:22px;font-size:clamp(11px,1.5vw,13px)}
+    #domain-container{display:flex;flex-wrap:wrap;gap:10px;overflow-y:auto;flex:1;align-content:flex-start;padding:4px 2px}
+    #archive-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+    .archive-item{border:var(--border-thin);padding:8px 10px;font-size:11px;background:#fcfcfc}
+    .archive-item .header{display:flex;justify-content:space-between;font-weight:700;border-bottom:2px solid #0a0a0a;padding-bottom:4px;margin-bottom:5px;font-size:12px}
+    .archive-item .match-thumbs{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+    .btn{padding:11px 16px;border:var(--border-thick);background:var(--bg-main);color:var(--text-main);font-weight:700;text-transform:uppercase;cursor:pointer;font-family:var(--font-mono);font-size:clamp(11px,1.3vw,13px);letter-spacing:.3px;transition:background .15s,color .15s}
+    .btn:hover:not(:disabled){background:var(--bg-dark);color:var(--text-inv)}
+    .btn:disabled{opacity:.3;cursor:not-allowed}
+    .btn-sm{padding:4px 10px;border:var(--border-thin);background:var(--bg-main);cursor:pointer;font-weight:700;font-family:var(--font-mono);font-size:11px;transition:background .15s,color .15s}
+    .btn-sm:hover{background:var(--bg-dark);color:var(--text-inv)}
+    .status-badge{font-size:10px;padding:4px 10px;border:var(--border-thin);font-weight:700;letter-spacing:.3px}
+    .status-badge.active{background:var(--bg-dark);color:var(--text-inv)}
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;display:none;align-items:center;justify-content:center;z-index:100}
+    .modal-overlay.active{display:flex}
+    .modal-box{border:var(--border-thick);background:#fff;padding:28px 24px;max-width:480px;width:92%;text-align:center}
+    .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+    .home-card{border:var(--border-thick);padding:22px 12px;cursor:pointer;font-weight:700;font-size:clamp(18px,2.5vw,22px);text-transform:uppercase;transition:background .15s,color .15s}
+    .home-card:hover{background:var(--bg-dark);color:var(--text-inv)}
+    .hidden{display:none!important}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:#e0e0e0}
+    ::-webkit-scrollbar-thumb{background:#0a0a0a;border-radius:3px}
   </style>
 </head>
 <body>
@@ -276,388 +171,377 @@
 </div>
 
 <script>
-(function() {
-  // ==================== DATA ====================
-  const shows = [
-    { id: 'spongebob', title: 'SpongeBob', image: 'images/kodomain/show-spongebob.svg' },
-    { id: 'doraemon', title: 'Doraemon', image: 'images/kodomain/show-doraemon.svg' },
-    { id: 'naruto', title: 'Naruto', image: 'images/kodomain/show-naruto.svg' },
-    { id: 'upinipin', title: 'Upin & Ipin', image: 'images/kodomain/show-upinipin.svg' },
-    { id: 'avatar', title: 'Avatar Aang', image: 'images/kodomain/show-avatar.svg' },
-    { id: 'onepiece', title: 'One Piece', image: 'images/kodomain/show-onepiece.svg' }
-  ];
+  (function() {
+    // ==================== DATA ====================
+    const shows = [
+      { id: 'spongebob', title: 'SpongeBob', image: 'images/kodomain/show-spongebob.svg' },
+      { id: 'doraemon', title: 'Doraemon', image: 'images/kodomain/show-doraemon.svg' },
+      { id: 'naruto', title: 'Naruto', image: 'images/kodomain/show-naruto.svg' },
+      { id: 'upinipin', title: 'Upin & Ipin', image: 'images/kodomain/show-upinipin.svg' },
+      { id: 'avatar', title: 'Avatar Aang', image: 'images/kodomain/show-avatar.svg' },
+      { id: 'onepiece', title: 'One Piece', image: 'images/kodomain/show-onepiece.svg' }
+    ];
 
-  const allCharacters = [
-    { id: 'c1', name: 'SpongeBob', showId: 'spongebob', image: 'images/domain/sponge.svg' },
-    { id: 'c2', name: 'Patrick', showId: 'spongebob', image: 'images/domain/patrick.svg' },
-    { id: 'c3', name: 'Squidward', showId: 'spongebob', image: 'images/domain/squidward.svg' },
-    { id: 'c4', name: 'Mr. Krabs', showId: 'spongebob', image: 'images/domain/mrkrabs.svg' },
-    { id: 'c5', name: 'Doraemon', showId: 'doraemon', image: 'images/domain/doraemon.svg' },
-    { id: 'c6', name: 'Nobita', showId: 'doraemon', image: 'images/domain/nobita.svg' },
-    { id: 'c7', name: 'Shizuka', showId: 'doraemon', image: 'images/domain/shizuka.svg' },
-    { id: 'c8', name: 'Giant', showId: 'doraemon', image: 'images/domain/giant.svg' },
-    { id: 'c9', name: 'Naruto', showId: 'naruto', image: 'images/domain/naruto.svg' },
-    { id: 'c10', name: 'Sasuke', showId: 'naruto', image: 'images/domain/sasuke.svg' },
-    { id: 'c11', name: 'Sakura', showId: 'naruto', image: 'images/domain/sakura.svg' },
-    { id: 'c12', name: 'Kakashi', showId: 'naruto', image: 'images/domain/kakashi.svg' },
-    { id: 'c13', name: 'Upin', showId: 'upinipin', image: 'images/domain/upin.svg' },
-    { id: 'c14', name: 'Ipin', showId: 'upinipin', image: 'images/domain/ipin.svg' }
-  ];
+    const allCharacters = [
+      { id: 'c1', name: 'SpongeBob', showId: 'spongebob', image: 'images/domain/sponge.svg' },
+      { id: 'c2', name: 'Patrick', showId: 'spongebob', image: 'images/domain/patrick.svg' },
+      { id: 'c3', name: 'Squidward', showId: 'spongebob', image: 'images/domain/squidward.svg' },
+      { id: 'c4', name: 'Mr. Krabs', showId: 'spongebob', image: 'images/domain/mrkrabs.svg' },
+      { id: 'c5', name: 'Doraemon', showId: 'doraemon', image: 'images/domain/doraemon.svg' },
+      { id: 'c6', name: 'Nobita', showId: 'doraemon', image: 'images/domain/nobita.svg' },
+      { id: 'c7', name: 'Shizuka', showId: 'doraemon', image: 'images/domain/shizuka.svg' },
+      { id: 'c8', name: 'Giant', showId: 'doraemon', image: 'images/domain/giant.svg' },
+      { id: 'c9', name: 'Naruto', showId: 'naruto', image: 'images/domain/naruto.svg' },
+      { id: 'c10', name: 'Sasuke', showId: 'naruto', image: 'images/domain/sasuke.svg' },
+      { id: 'c11', name: 'Sakura', showId: 'naruto', image: 'images/domain/sakura.svg' },
+      { id: 'c12', name: 'Kakashi', showId: 'naruto', image: 'images/domain/kakashi.svg' },
+      { id: 'c13', name: 'Upin', showId: 'upinipin', image: 'images/domain/upin.svg' },
+      { id: 'c14', name: 'Ipin', showId: 'upinipin', image: 'images/domain/ipin.svg' }
+    ];
 
-  const domainNumbers = [
-    { id: 'n2', name: '2', val: 2, image: 'images/domain/n2.svg' },
-    { id: 'n3', name: '3', val: 3, image: 'images/domain/n3.svg' },
-    { id: 'n4', name: '4', val: 4, image: 'images/domain/n4.svg' },
-    { id: 'n5', name: '5', val: 5, image: 'images/domain/n5.svg' },
-    { id: 'n6', name: '6', val: 6, image: 'images/domain/n6.svg' },
-    { id: 'n8', name: '8', val: 8, image: 'images/domain/n8.svg' },
-    { id: 'n9', name: '9', val: 9, image: 'images/domain/n9.svg' },
-    { id: 'n10', name: '10', val: 10, image: 'images/domain/n10.svg' },
-    { id: 'n12', name: '12', val: 12, image: 'images/domain/n12.svg' },
-    { id: 'n15', name: '15', val: 15, image: 'images/domain/n15.svg' }
-  ];
+    const domainNumbers = [
+      { id: 'n2', name: '2', val: 2, image: 'images/domain/n2.svg' },
+      { id: 'n3', name: '3', val: 3, image: 'images/domain/n3.svg' },
+      { id: 'n4', name: '4', val: 4, image: 'images/domain/n4.svg' },
+      { id: 'n5', name: '5', val: 5, image: 'images/domain/n5.svg' },
+      { id: 'n6', name: '6', val: 6, image: 'images/domain/n6.svg' },
+      { id: 'n8', name: '8', val: 8, image: 'images/domain/n8.svg' },
+      { id: 'n9', name: '9', val: 9, image: 'images/domain/n9.svg' },
+      { id: 'n10', name: '10', val: 10, image: 'images/domain/n10.svg' },
+      { id: 'n12', name: '12', val: 12, image: 'images/domain/n12.svg' },
+      { id: 'n15', name: '15', val: 15, image: 'images/domain/n15.svg' }
+    ];
 
-  const kodomainNumbers = [
-    { id: 'k3', title: '3', val: 3, rule: 'habis_dibagi', image: 'images/kodomain/k3.svg' },
-    { id: 'k5', title: '5', val: 5, rule: 'habis_dibagi', image: 'images/kodomain/k5.svg' },
-    { id: 'k4', title: '4', val: 4, rule: 'habis_dibagi', image: 'images/kodomain/k4.svg' },
-    { id: 'k8', title: '8', val: 8, rule: 'hasil_kali_2', image: 'images/kodomain/k8.svg' },
-    { id: 'k12', title: '12', val: 12, rule: 'hasil_kali_2', image: 'images/kodomain/k12.svg' },
-    { id: 'k20', title: '20', val: 20, rule: 'hasil_kali_2', image: 'images/kodomain/k20.svg' }
-  ];
+    const kodomainNumbers = [
+      { id: 'k3', title: '3', val: 3, rule: 'habis_dibagi', image: 'images/kodomain/k3.svg' },
+      { id: 'k5', title: '5', val: 5, rule: 'habis_dibagi', image: 'images/kodomain/k5.svg' },
+      { id: 'k4', title: '4', val: 4, rule: 'habis_dibagi', image: 'images/kodomain/k4.svg' },
+      { id: 'k8', title: '8', val: 8, rule: 'hasil_kali_2', image: 'images/kodomain/k8.svg' },
+      { id: 'k12', title: '12', val: 12, rule: 'hasil_kali_2', image: 'images/kodomain/k12.svg' },
+      { id: 'k20', title: '20', val: 20, rule: 'hasil_kali_2', image: 'images/kodomain/k20.svg' }
+    ];
 
-  const relationCardsKartun = [
-    { id: 'r1', label: 'Karakter Dari', rule: 'show_match', image: 'images/relation/kartun-relation.svg' }
-  ];
-  const relationCardsBilangan = [
-    { id: 'r2', label: 'Habis Dibagi Oleh', rule: 'habis_dibagi', image: 'images/relation/habis-dibagi.svg' },
-    { id: 'r3', label: 'Hasil Kali 2 =', rule: 'hasil_kali_2', image: 'images/relation/hasil-kali-2.svg' }
-  ];
+    const relationCardsKartun = [
+      { id: 'r1', label: 'Karakter Dari', rule: 'show_match', image: 'images/relation/kartun-relation.svg' }
+    ];
+    const relationCardsBilangan = [
+      { id: 'r2', label: 'Habis Dibagi Oleh', rule: 'habis_dibagi', image: 'images/relation/habis-dibagi.svg' },
+      { id: 'r3', label: 'Hasil Kali 2 =', rule: 'hasil_kali_2', image: 'images/relation/hasil-kali-2.svg' }
+    ];
 
-  // ==================== STATE ====================
-  let currentMode = 'kartun';
-  let domainHand = [], kodomainDeck = [], relationDeck = [];
-  let currentRelation = null, activeKodomain = null, activeRelationsMatched = [];
-  let archivedRounds = [], selectedCardElement = null;
+    // ==================== STATE ====================
+    let currentMode = 'kartun';
+    let domainHand = [], kodomainDeck = [], relationDeck = [];
+    let currentRelation = null, activeKodomain = null, activeRelationsMatched = [];
+    let archivedRounds = [], selectedCardElement = null;
 
-  // ==================== CACHE ELEMEN PENTING ====================
-  const $ = id => document.getElementById(id);
-  const dom = {
-    homePage:         $('home-page'),
-    relationDeckPile: $('relation-deck-pile'),
-    relationDeckCount:$('relation-deck-count'),
-    activeRelation:   $('active-relation-display'),
-    kodomainDeckPile: $('kodomain-deck-pile'),
-    kodomainDeckCount:$('kodomain-deck-count'),
-    activeKodomainCard: $('active-kodomain-card'),
-    activeStack:      $('active-stack'),
-    activeStatus:     $('active-status'),
-    nextRoundBtn:     $('next-round-btn'),
-    domainContainer:  $('domain-container'),
-    cardsLeft:        $('cards-left'),
-    archiveList:      $('archive-list'),
-    msgModal:         $('msg-modal'),
-    modalTitle:       $('modal-title'),
-    modalBody:        $('modal-body'),
-    confirmModal:     $('confirm-modal')
-  };
+    // Cache elemen DOM
+    const dom = {
+      homePage:           document.getElementById('home-page'),
+      relDeckPile:        document.getElementById('relation-deck-pile'),
+      relDeckCount:       document.getElementById('relation-deck-count'),
+      activeRel:          document.getElementById('active-relation-display'),
+      kodDeckPile:        document.getElementById('kodomain-deck-pile'),
+      kodDeckCount:       document.getElementById('kodomain-deck-count'),
+      activeKodCard:      document.getElementById('active-kodomain-card'),
+      activeStack:        document.getElementById('active-stack'),
+      activeStatus:       document.getElementById('active-status'),
+      nextRoundBtn:       document.getElementById('next-round-btn'),
+      domainContainer:    document.getElementById('domain-container'),
+      cardsLeft:          document.getElementById('cards-left'),
+      archiveList:        document.getElementById('archive-list'),
+      msgModal:           document.getElementById('msg-modal'),
+      modalTitle:         document.getElementById('modal-title'),
+      modalBody:          document.getElementById('modal-body'),
+      confirmModal:       document.getElementById('confirm-modal')
+    };
 
-  // ==================== FUNGSI UTILITAS ====================
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
+    // ==================== UTILITAS ====================
+    const shuffle = arr => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
 
-  function showModal(title, msg) {
-    dom.modalTitle.textContent = title;
-    dom.modalBody.textContent = msg;
-    dom.msgModal.classList.add('active');
-  }
+    const showModal = (t, m) => {
+      dom.modalTitle.textContent = t;
+      dom.modalBody.textContent = m;
+      dom.msgModal.classList.add('active');
+    };
 
-  function closeModal() {
-    dom.msgModal.classList.remove('active');
-  }
+    const closeModal = () => dom.msgModal.classList.remove('active');
+    const confirmGoHome = () => dom.confirmModal.classList.add('active');
+    const closeConfirmModal = () => dom.confirmModal.classList.remove('active');
+    const forceGoHome = () => {
+      closeConfirmModal();
+      dom.homePage.classList.add('active');
+    };
 
-  function confirmGoHome() {
-    dom.confirmModal.classList.add('active');
-  }
+    // ==================== INISIALISASI / RESET ====================
+    const startGame = mode => {
+      currentMode = mode;
+      dom.homePage.classList.remove('active');
+      resetGameState();
+    };
 
-  function closeConfirmModal() {
-    dom.confirmModal.classList.remove('active');
-  }
-
-  function forceGoHome() {
-    closeConfirmModal();
-    dom.homePage.classList.add('active');
-  }
-
-  // ==================== GAME FLOW ====================
-  window.startGame = function(mode) {
-    currentMode = mode;
-    dom.homePage.classList.remove('active');
-    resetGameState();
-  };
-
-  function resetGameState() {
-    selectedCardElement = null;
-    currentRelation = null;
-    activeKodomain = null;
-    activeRelationsMatched = [];
-    archivedRounds = [];
-
-    if (currentMode === 'kartun') {
-      domainHand = shuffle([...allCharacters]);
-      kodomainDeck = shuffle([...shows]);
-      relationDeck = shuffle([...relationCardsKartun]);
-    } else {
-      domainHand = shuffle([...domainNumbers]);
-      kodomainDeck = shuffle([...kodomainNumbers]);
-      relationDeck = shuffle([...relationCardsBilangan]);
-    }
-
-    updateAllDecksUI();
-    resetWorkspaceUI();
-    renderDomainHand();
-    dom.archiveList.innerHTML = '<div style="text-align:center;color:#999;margin-top:18px;font-style:italic;font-size:12px;">Belum ada arsip ronde...</div>';
-    dom.cardsLeft.textContent = domainHand.length;
-  }
-
-  function updateAllDecksUI() {
-    const relCount = relationDeck.length;
-    dom.relationDeckPile.classList.toggle('disabled', relCount === 0);
-    dom.relationDeckCount.textContent = relCount === 0 ? 'HABIS' : `Sisa: ${relCount}`;
-
-    const kodCount = kodomainDeck.length;
-    dom.kodomainDeckPile.classList.toggle('disabled', kodCount === 0);
-    dom.kodomainDeckCount.textContent = kodCount === 0 ? 'HABIS' : `Sisa: ${kodCount}`;
-
-    if (currentRelation) {
-      dom.activeRelation.innerHTML = `<img src="${currentRelation.image}" alt="${currentRelation.label}" style="width:100%;height:100%;object-fit:contain;">`;
-      dom.activeRelation.style.border = 'var(--border-thin)';
-    } else {
-      dom.activeRelation.innerHTML = '<div style="font-weight:700;font-size:11px;color:#999;">BELUM DIBUKA</div>';
-      dom.activeRelation.style.border = '2px dashed #aaa';
-    }
-  }
-
-  function resetWorkspaceUI() {
-    dom.activeKodomainCard.innerHTML = '<div style="font-weight:700;font-size:11px;color:#999;">-</div>';
-    dom.activeKodomainCard.style.border = '2px dashed #aaa';
-    dom.activeStack.innerHTML = '<span class="placeholder">Buka Relasi &amp; Kodomain dahulu...</span>';
-    dom.activeStatus.textContent = 'MENUNGGU';
-    dom.activeStatus.className = 'status-badge';
-    dom.nextRoundBtn.disabled = true;
-  }
-
-  // ==================== RENDER DOMAIN (DENGAN EVENT DELEGATION) ====================
-  function renderDomainHand() {
-    let html = '';
-    for (const item of domainHand) {
-      html += `<div class="playing-card" draggable="true" data-id="${item.id}">
-                <img src="${item.image}" alt="${item.name}" draggable="false">
-              </div>`;
-    }
-    dom.domainContainer.innerHTML = html;
-  }
-
-  // Delegasi: click
-  dom.domainContainer.addEventListener('click', e => {
-    const card = e.target.closest('.playing-card');
-    if (!card) return;
-    e.stopPropagation();
-    // Jika klik pada area workspace (active stack) dengan kartu terpilih, sudah ditangani di bawah.
-    // Tapi di sini hanya toggle seleksi.
-    selectDomainCard(card);
-  });
-
-  // Delegasi: dragstart
-  dom.domainContainer.addEventListener('dragstart', e => {
-    const card = e.target.closest('.playing-card');
-    if (!card) return;
-    e.dataTransfer.setData('text/plain', card.dataset.id);
-    card.style.opacity = '0.55';
-  });
-
-  // Delegasi: dragend
-  dom.domainContainer.addEventListener('dragend', e => {
-    const card = e.target.closest('.playing-card');
-    if (card) card.style.opacity = '1';
-  });
-
-  function selectDomainCard(el) {
-    if (selectedCardElement && selectedCardElement !== el) {
-      selectedCardElement.classList.remove('selected');
-    }
-    if (selectedCardElement === el) {
-      el.classList.remove('selected');
+    function resetGameState() {
       selectedCardElement = null;
-    } else {
-      el.classList.add('selected');
-      selectedCardElement = el;
-    }
-  }
+      currentRelation = null;
+      activeKodomain = null;
+      activeRelationsMatched = [];
+      archivedRounds = [];
 
-  // ==================== DRAW CARDS ====================
-  window.drawRelationCard = function() {
-    if (currentRelation && (kodomainDeck.length > 0 || activeKodomain !== null)) {
-      showModal('RELASI AKTIF', 'Selesaikan ronde sebelum buka aturan baru.');
-      return;
-    }
-    if (relationDeck.length === 0) return;
-    currentRelation = relationDeck.shift();
-    // Reset kodomain deck untuk aturan baru
-    kodomainDeck = shuffle(currentMode === 'kartun' ? [...shows] : [...kodomainNumbers]);
-    updateAllDecksUI();
-  };
-
-  window.drawKodomainCard = function() {
-    if (!currentRelation) {
-      showModal('GAGAL', 'Buka Dek Aturan (Relasi) dulu!');
-      return;
-    }
-    if (activeKodomain) {
-      showModal('RONDE AKTIF', 'Lakukan konfirmasi & lanjut terlebih dahulu.');
-      return;
-    }
-    if (kodomainDeck.length === 0) return;
-
-    activeKodomain = kodomainDeck.shift();
-    activeRelationsMatched = [];
-    updateAllDecksUI();
-
-    dom.activeKodomainCard.innerHTML = `<img src="${activeKodomain.image}" alt="${activeKodomain.title || activeKodomain.name}" style="width:100%;height:100%;object-fit:contain;">`;
-    dom.activeKodomainCard.style.border = 'var(--border-thin)';
-    dom.activeStack.innerHTML = '<span class="placeholder" style="color:#000;">Area aktif. Tarik/klik domain ke sini.</span>';
-    dom.activeStatus.textContent = 'AKTIF';
-    dom.activeStatus.className = 'status-badge active';
-    dom.nextRoundBtn.disabled = false;
-  };
-
-  // ==================== MATCHING ====================
-  function attemptMatch(cardId) {
-    if (!activeKodomain || !currentRelation) return;
-    const idx = domainHand.findIndex(d => d.id === cardId);
-    if (idx === -1) return;
-
-    const item = domainHand[idx];
-    let cocok = false, feedback = '';
-
-    if (currentMode === 'kartun') {
-      cocok = (item.showId === activeKodomain.id);
-      feedback = `Salah! ${item.name} bukan dari ${activeKodomain.title}.`;
-    } else {
-      const x = item.val, y = activeKodomain.val;
-      if (currentRelation.rule === 'habis_dibagi') {
-        cocok = (x % y === 0);
-        feedback = `Salah! ${x} tidak habis dibagi ${y}.`;
-      } else if (currentRelation.rule === 'hasil_kali_2') {
-        cocok = (x * 2 === y);
-        feedback = `Salah! ${x} × 2 bukan ${y}.`;
+      if (currentMode === 'kartun') {
+        domainHand = shuffle(allCharacters.slice());
+        kodomainDeck = shuffle(shows.slice());
+        relationDeck = shuffle(relationCardsKartun.slice());
+      } else {
+        domainHand = shuffle(domainNumbers.slice());
+        kodomainDeck = shuffle(kodomainNumbers.slice());
+        relationDeck = shuffle(relationCardsBilangan.slice());
       }
-    }
 
-    if (cocok) {
-      domainHand.splice(idx, 1);
-      activeRelationsMatched.push(item);
-      renderActiveStack();
+      updateAllDecksUI();
+      resetWorkspaceUI();
       renderDomainHand();
+      dom.archiveList.innerHTML = '<div style="text-align:center;color:#999;margin-top:18px;font-style:italic;font-size:12px;">Belum ada arsip ronde...</div>';
       dom.cardsLeft.textContent = domainHand.length;
-      if (selectedCardElement) {
-        selectedCardElement.classList.remove('selected');
-        selectedCardElement = null;
-      }
-    } else {
-      if (selectedCardElement) {
-        selectedCardElement.classList.remove('selected');
-        selectedCardElement = null;
-      }
-      showModal('TIDAK COCOK', feedback);
     }
-  }
 
-  function renderActiveStack() {
-    let html = '';
-    if (activeRelationsMatched.length === 0) {
-      html = '<span class="placeholder">Kosong. Tarik ke sini.</span>';
-    } else {
-      for (const item of activeRelationsMatched) {
-        html += `<div class="mini-card"><img src="${item.image}" alt="${item.name}"></div>`;
+    // ==================== UPDATE UI DEK ====================
+    function updateAllDecksUI() {
+      const relCount = relationDeck.length;
+      dom.relDeckPile.classList.toggle('disabled', relCount === 0);
+      dom.relDeckCount.textContent = relCount ? `Sisa: ${relCount}` : 'HABIS';
+
+      const kodCount = kodomainDeck.length;
+      dom.kodDeckPile.classList.toggle('disabled', kodCount === 0);
+      dom.kodDeckCount.textContent = kodCount ? `Sisa: ${kodCount}` : 'HABIS';
+
+      if (currentRelation) {
+        dom.activeRel.innerHTML = `<img src="${currentRelation.image}" alt="${currentRelation.label}" style="width:100%;height:100%;object-fit:contain;">`;
+        dom.activeRel.style.border = 'var(--border-thin)';
+      } else {
+        dom.activeRel.textContent = '';  // hapus innerHTML gambar
+        dom.activeRel.innerHTML = '<div style="font-weight:700;font-size:11px;color:#999;">BELUM DIBUKA</div>';
+        dom.activeRel.style.border = '2px dashed #aaa';
       }
     }
-    dom.activeStack.innerHTML = html;
-  }
 
-  // ==================== DROP / KLIK PADA WORKSPACE ====================
-  dom.activeStack.addEventListener('dragover', e => {
-    e.preventDefault();
-    if (activeKodomain) dom.activeStack.classList.add('drag-over');
-  });
-  dom.activeStack.addEventListener('dragleave', () => {
-    dom.activeStack.classList.remove('drag-over');
-  });
-  dom.activeStack.addEventListener('drop', e => {
-    e.preventDefault();
-    dom.activeStack.classList.remove('drag-over');
-    if (!activeKodomain) return;
-    const id = e.dataTransfer.getData('text/plain');
-    if (id) attemptMatch(id);
-  });
-
-  // Klik pada area workspace (jika ada kartu terpilih) → langsung cocokkan
-  dom.activeStack.addEventListener('click', () => {
-    if (selectedCardElement && activeKodomain) {
-      attemptMatch(selectedCardElement.dataset.id);
+    function resetWorkspaceUI() {
+      dom.activeKodCard.innerHTML = '<div style="font-weight:700;font-size:11px;color:#999;">-</div>';
+      dom.activeKodCard.style.border = '2px dashed #aaa';
+      dom.activeStack.innerHTML = '<span class="placeholder">Buka Relasi &amp; Kodomain dahulu...</span>';
+      dom.activeStatus.textContent = 'MENUNGGU';
+      dom.activeStatus.className = 'status-badge';
+      dom.nextRoundBtn.disabled = true;
     }
-  });
 
-  // ==================== ARSIP ====================
-  window.archiveCurrentRound = function() {
-    if (!activeKodomain) return;
-    archivedRounds.push({
-      relation: currentRelation,
-      kodomain: activeKodomain,
-      matches: [...activeRelationsMatched]
+    // ==================== RENDER DOMAIN (pakai innerHTML) ====================
+    function renderDomainHand() {
+      let html = '';
+      for (const item of domainHand) {
+        html += `<div class="playing-card" draggable="true" data-id="${item.id}">
+                  <img src="${item.image}" alt="${item.name}" draggable="false">
+                </div>`;
+      }
+      dom.domainContainer.innerHTML = html;
+    }
+
+    // ==================== EVENT DELEGATION DOMAIN ====================
+    dom.domainContainer.addEventListener('click', e => {
+      const card = e.target.closest('.playing-card');
+      if (!card) return;
+      e.stopPropagation();
+      selectDomainCard(card);
     });
 
-    // Update tampilan arsip
-    if (archivedRounds.length === 1) dom.archiveList.innerHTML = '';
-    const matchNames = activeRelationsMatched.map(m => m.name).join(', ') || 'KOSONG';
-    let thumbs = '';
-    for (const m of activeRelationsMatched) {
-      thumbs += `<div class="mini-card" style="width:36px;height:50px;"><img src="${m.image}" alt="${m.name}"></div>`;
+    dom.domainContainer.addEventListener('dragstart', e => {
+      const card = e.target.closest('.playing-card');
+      if (!card) return;
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      card.style.opacity = '0.55';
+    });
+
+    dom.domainContainer.addEventListener('dragend', e => {
+      const card = e.target.closest('.playing-card');
+      if (card) card.style.opacity = '1';
+    });
+
+    function selectDomainCard(el) {
+      if (selectedCardElement && selectedCardElement !== el) {
+        selectedCardElement.classList.remove('selected');
+      }
+      if (selectedCardElement === el) {
+        el.classList.remove('selected');
+        selectedCardElement = null;
+      } else {
+        el.classList.add('selected');
+        selectedCardElement = el;
+      }
     }
 
-    const div = document.createElement('div');
-    div.className = 'archive-item';
-    div.innerHTML = `
-      <div class="header"><span>#${archivedRounds.length}</span> <span>${activeKodomain.title || activeKodomain.name}</span></div>
-      <div style="font-size:10px;margin-bottom:4px;">Aturan: ${currentRelation.label}</div>
-      <div style="font-weight:700;font-size:11px;">Isi: ${matchNames}</div>
-      <div class="match-thumbs">${thumbs || '<span style="font-size:10px;color:#999;">—</span>'}</div>
-    `;
-    dom.archiveList.appendChild(div);
-    dom.archiveList.scrollTop = dom.archiveList.scrollHeight;
+    // ==================== DRAW CARDS ====================
+    const drawRelationCard = () => {
+      if (currentRelation && (kodomainDeck.length || activeKodomain)) {
+        showModal('RELASI AKTIF', 'Selesaikan ronde sebelum buka aturan baru.');
+        return;
+      }
+      if (!relationDeck.length) return;
+      currentRelation = relationDeck.shift();
+      kodomainDeck = shuffle(currentMode === 'kartun' ? shows.slice() : kodomainNumbers.slice());
+      updateAllDecksUI();
+    };
 
-    // Reset ronde
-    activeKodomain = null;
-    activeRelationsMatched = [];
-    resetWorkspaceUI();
+    const drawKodomainCard = () => {
+      if (!currentRelation) {
+        showModal('GAGAL', 'Buka Dek Aturan (Relasi) dulu!');
+        return;
+      }
+      if (activeKodomain) {
+        showModal('RONDE AKTIF', 'Lakukan konfirmasi & lanjut terlebih dahulu.');
+        return;
+      }
+      if (!kodomainDeck.length) return;
 
-    if (kodomainDeck.length === 0 && relationDeck.length === 0) {
-      showModal('SELESAI', 'Permainan Selesai! Semua dek telah dihabiskan.');
+      activeKodomain = kodomainDeck.shift();
+      activeRelationsMatched = [];
+      updateAllDecksUI();
+
+      dom.activeKodCard.innerHTML = `<img src="${activeKodomain.image}" alt="${activeKodomain.title || activeKodomain.name}" style="width:100%;height:100%;object-fit:contain;">`;
+      dom.activeKodCard.style.border = 'var(--border-thin)';
+      dom.activeStack.innerHTML = '<span class="placeholder" style="color:#000;">Area aktif. Tarik/klik domain ke sini.</span>';
+      dom.activeStatus.textContent = 'AKTIF';
+      dom.activeStatus.className = 'status-badge active';
+      dom.nextRoundBtn.disabled = false;
+    };
+
+    // ==================== MATCHING ====================
+    function attemptMatch(cardId) {
+      if (!activeKodomain || !currentRelation) return;
+      const idx = domainHand.findIndex(d => d.id === cardId);
+      if (idx === -1) return;
+
+      const item = domainHand[idx];
+      let cocok = false;
+      let feedback = '';
+
+      if (currentMode === 'kartun') {
+        cocok = item.showId === activeKodomain.id;
+        if (!cocok) feedback = `Salah! ${item.name} bukan dari ${activeKodomain.title}.`;
+      } else {
+        const x = item.val, y = activeKodomain.val;
+        if (currentRelation.rule === 'habis_dibagi') {
+          cocok = (x % y === 0);
+          if (!cocok) feedback = `Salah! ${x} tidak habis dibagi ${y}.`;
+        } else if (currentRelation.rule === 'hasil_kali_2') {
+          cocok = (x * 2 === y);
+          if (!cocok) feedback = `Salah! ${x} × 2 bukan ${y}.`;
+        }
+      }
+
+      if (cocok) {
+        domainHand.splice(idx, 1);
+        activeRelationsMatched.push(item);
+        renderActiveStack();
+        renderDomainHand();
+        dom.cardsLeft.textContent = domainHand.length;
+        if (selectedCardElement) {
+          selectedCardElement.classList.remove('selected');
+          selectedCardElement = null;
+        }
+      } else {
+        if (selectedCardElement) {
+          selectedCardElement.classList.remove('selected');
+          selectedCardElement = null;
+        }
+        showModal('TIDAK COCOK', feedback);
+      }
     }
-  };
 
-  // Expose fungsi ke global scope (untuk onclick HTML)
-  window.closeModal = closeModal;
-  window.confirmGoHome = confirmGoHome;
-  window.closeConfirmModal = closeConfirmModal;
-  window.forceGoHome = forceGoHome;
-})();
+    function renderActiveStack() {
+      if (!activeRelationsMatched.length) {
+        dom.activeStack.innerHTML = '<span class="placeholder">Kosong. Tarik ke sini.</span>';
+        return;
+      }
+      let html = '';
+      for (const m of activeRelationsMatched) {
+        html += `<div class="mini-card"><img src="${m.image}" alt="${m.name}"></div>`;
+      }
+      dom.activeStack.innerHTML = html;
+    }
+
+    // ==================== DROP / KLIK WORKSPACE ====================
+    dom.activeStack.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (activeKodomain) dom.activeStack.classList.add('drag-over');
+    });
+    dom.activeStack.addEventListener('dragleave', () => dom.activeStack.classList.remove('drag-over'));
+    dom.activeStack.addEventListener('drop', e => {
+      e.preventDefault();
+      dom.activeStack.classList.remove('drag-over');
+      if (!activeKodomain) return;
+      const id = e.dataTransfer.getData('text/plain');
+      if (id) attemptMatch(id);
+    });
+
+    dom.activeStack.addEventListener('click', () => {
+      if (selectedCardElement && activeKodomain) {
+        attemptMatch(selectedCardElement.dataset.id);
+      }
+    });
+
+    // ==================== ARSIP ====================
+    const archiveCurrentRound = () => {
+      if (!activeKodomain) return;
+
+      archivedRounds.push({
+        relation: currentRelation,
+        kodomain: activeKodomain,
+        matches: [...activeRelationsMatched]
+      });
+
+      if (archivedRounds.length === 1) dom.archiveList.innerHTML = '';
+
+      const matchNames = activeRelationsMatched.length ? activeRelationsMatched.map(m => m.name).join(', ') : 'KOSONG';
+      let thumbsHtml = '';
+      for (const m of activeRelationsMatched) {
+        thumbsHtml += `<div class="mini-card" style="width:36px;height:50px;"><img src="${m.image}" alt="${m.name}"></div>`;
+      }
+
+      const archiveEntry = `
+        <div class="archive-item">
+          <div class="header"><span>#${archivedRounds.length}</span> <span>${activeKodomain.title || activeKodomain.name}</span></div>
+          <div style="font-size:10px;margin-bottom:4px;">Aturan: ${currentRelation.label}</div>
+          <div style="font-weight:700;font-size:11px;">Isi: ${matchNames}</div>
+          <div class="match-thumbs">${thumbsHtml || '<span style="font-size:10px;color:#999;">—</span>'}</div>
+        </div>
+      `;
+      dom.archiveList.insertAdjacentHTML('beforeend', archiveEntry);
+      dom.archiveList.scrollTop = dom.archiveList.scrollHeight;
+
+      activeKodomain = null;
+      activeRelationsMatched = [];
+      resetWorkspaceUI();
+
+      if (!kodomainDeck.length && !relationDeck.length) {
+        showModal('SELESAI', 'Permainan Selesai! Semua dek telah dihabiskan.');
+      }
+    };
+
+    // Expose ke global
+    window.startGame = startGame;
+    window.drawRelationCard = drawRelationCard;
+    window.drawKodomainCard = drawKodomainCard;
+    window.archiveCurrentRound = archiveCurrentRound;
+    window.closeModal = closeModal;
+    window.confirmGoHome = confirmGoHome;
+    window.closeConfirmModal = closeConfirmModal;
+    window.forceGoHome = forceGoHome;
+  })();
 </script>
 </body>
 </html>
